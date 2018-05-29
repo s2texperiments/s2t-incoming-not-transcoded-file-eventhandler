@@ -1,14 +1,9 @@
-// const AWS = require('aws-sdk');
-// const s3 = new AWS.S3();
-// const headObject = async (params) =>
-//     new Promise((resolve, rejected) =>
-//         s3.headObject(params, (err, data) =>
-//             err ? rejected(err) : resolve(data)));
-
+const test = process.env['MODE'] === 'test';
+let s3Api = test ? require('./test/s3ApiMock.js') : require('./s3Api.js');
 
 exports.handler = async (event) => {
+    console.log(await s3Api.headObject());
 
-    console.log('test');
     // let s3Event = event.Records[0].s3;
     //
     //
@@ -20,7 +15,7 @@ exports.handler = async (event) => {
     //     }
     // );
 
-    /*
+    /* todo: move to mock object
  data = {
   AcceptRanges: "bytes",
   ContentLength: 3191,
