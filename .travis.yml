@@ -10,6 +10,6 @@ deploy:
   #acl: public_read
   region: eu-west-1
   skip_cleanup: true
-  before_deploy:
-    - ./deploy_s3.sh
-  local_dir: deploy
+  #before_deploy:
+  #  - ./deploy_s3.sh
+  #local_dir: deploy
