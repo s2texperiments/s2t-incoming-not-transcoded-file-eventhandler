@@ -1,4 +1,5 @@
 const test = process.env['MODE'] === 'test';
+console.log(process.env['MODE']);
 let s3Api = test ? require('./test/s3ApiMock.js') : require('./s3Api.js');
 
 exports.handler = async (event) => {
