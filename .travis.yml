@@ -9,7 +9,6 @@ deploy:
   bucket: $AWS_S3_BUCKET_NAME
   skip_cleanup: true
   region: eu-west-1
-  skip_cleanup: true
   before_deploy:
     - ./deploy_s3.sh
   local_dir: test
