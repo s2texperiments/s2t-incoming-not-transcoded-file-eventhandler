@@ -2,6 +2,9 @@ language: node_js
 node_js:
   - "8"
 
+before_deploy:
+  - ./deploy_s3.sh
+
 deploy:
   provider: s3
   access_key_id: $AWS_ACCESS_KEY
@@ -9,6 +12,4 @@ deploy:
   bucket: $AWS_S3_BUCKET_NAME
   skip_cleanup: true
   region: eu-west-1
-  before_deploy:
-    - ./deploy_s3.sh
   local_dir: test
