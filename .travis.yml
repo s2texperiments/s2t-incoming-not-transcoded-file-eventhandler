@@ -11,5 +11,5 @@ deploy:
   region: eu-west-1
   skip_cleanup: true
   before_deploy:
-    - sh deploy_s3.sh
+    - ./deploy_s3.sh
   local_dir: test
