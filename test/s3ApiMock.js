@@ -1,24 +1,22 @@
 const expect = require('chai').expect;
 
 let expectedParams = {};
+let givenResponseHeadObject = {};
 
 module.exports = {
     expectedHeadObjectParams: (_) => expectedParams = _,
+    givenResponseHeadObject: (_) => givenResponseHeadObject = _,
     reset: () => {
         expectedParams = {};
+        givenResponseHeadObject = {};
     },
     headObject: async (params) => {
         expect(params).to.deep.equal(expectedParams);
         console.log(`expected head params: ${JSON.stringify(expectedParams)}`);
-        return new Promise((resolve, rejected) =>
-            resolve({
-                AcceptRanges: "bytes",
-                ContentLength: 3191,
-                ContentType: "image/jpeg",
-                ETag: "\"6805f2cfc46c0f04559748bb039d69ae\"",
-                LastModified: '',
-                Metadata: {},
-                VersionId: "null"
-            }))
+        console.log(`given head reponse: ${JSON.stringify(givenResponseHeadObject)}`);
+
+        return new Promise((resolve, rejected) => resolve(givenResponseHeadObject));
+
+        // }
     }
 };
