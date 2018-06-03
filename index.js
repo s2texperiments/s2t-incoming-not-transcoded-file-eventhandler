@@ -16,7 +16,6 @@ exports.handler = async (event) => {
         }]
     } = event;
 
-
     let fbFn = {
         processApiKeyIdFrom: (key) => key.split("/")[2],
         processPidFrom: (key) => key.split("/").pop().split(".")[0],
@@ -33,8 +32,7 @@ exports.handler = async (event) => {
         Bucket: bucketName,
         Key: key
     });
-
-
+    
     return {
         bucket: bucketName,
         key: key,
