@@ -23,7 +23,6 @@ exports.handler = async (event) => {
         processProviderFrom: (key) => key.split("/")[0],
     };
 
-    // s3.object.key
     let {
         Metadata: {
             "api-key-id": apiKeyId = fbFn.processApiKeyIdFrom(key),
@@ -34,6 +33,7 @@ exports.handler = async (event) => {
         Bucket: bucketName,
         Key: key
     });
+
 
     return {
         bucket: bucketName,
