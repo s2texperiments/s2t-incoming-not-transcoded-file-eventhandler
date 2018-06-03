@@ -4,16 +4,14 @@ let s3Api = test ? require('./test/s3ApiMock.js') : require('./s3Api.js');
 exports.handler = async (event) => {
 
     let {
-        Records: [{
-            s3: {
-                bucket: {
-                    name: bucketName
-                },
-                object: {
-                    key: key
-                }
+        MessageAttributes: {
+            bucket: {
+                Value: bucketName
+            },
+            key: {
+                Value: key
             }
-        }]
+        }
     } = event;
 
     let fbFn = {

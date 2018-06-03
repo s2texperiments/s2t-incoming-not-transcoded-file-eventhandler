@@ -6,7 +6,7 @@ require('dotenv').config({
 const expect = require('chai').expect;
 
 const fs = require('fs');
-const event = JSON.parse(fs.readFileSync('test/s3EventData.json', 'utf8'));
+const event = JSON.parse(fs.readFileSync('test/snsEventData.json', 'utf8'));
 
 describe('eventhandler', () => {
 
