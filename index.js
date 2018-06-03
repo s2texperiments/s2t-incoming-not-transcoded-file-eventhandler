@@ -32,7 +32,7 @@ exports.handler = async (event) => {
         Bucket: bucketName,
         Key: key
     });
-    
+
     return {
         bucket: bucketName,
         key: key,
