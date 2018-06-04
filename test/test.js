@@ -10,10 +10,12 @@ const event = JSON.parse(fs.readFileSync('test/s3EventData.json', 'utf8'));
 
 describe('eventhandler', () => {
 
-    let s3ApiMock;
+    let s3ApiMock, snsApiMock;
     beforeEach(() => {
         s3ApiMock = require('./s3ApiMock');
+        snsApiMock = require('./snsApiMock');
         s3ApiMock.reset();
+        snsApiMock.reset();
     });
 
     it('collect head request without meta data', async () => {
@@ -21,6 +23,34 @@ describe('eventhandler', () => {
             Bucket: "s2t-base-s2tbucket-19xbw73dypb0s",
             Key: "gcp/not-transcoded/sugr1km8s6/f423fbfb-6381-11e8-a23f-c7cbebde15f2.ogg"
         });
+
+        snsApiMock.expectedPublishParams(
+            {
+                Message: "placeholder",
+                MessageAttributes: {
+                    "api-key-id": {
+                        DataType: "String",
+                        StringValue: "sugr1km8s6"
+                    },
+                    bucket: {
+                        DataType: "String",
+                        StringValue: "s2t-base-s2tbucket-19xbw73dypb0s"
+                    },
+                    key: {
+                        DataType: "String",
+                        StringValue: "gcp/not-transcoded/sugr1km8s6/f423fbfb-6381-11e8-a23f-c7cbebde15f2.ogg"
+                    },
+                    pid: {
+                        DataType: "String",
+                        StringValue: "f423fbfb-6381-11e8-a23f-c7cbebde15f2"
+                    },
+                    "transcribe-provider": {
+                        DataType: "String",
+                        StringValue: "gcp"
+                    }
+                },
+                "TopicArn": "given:arn:from:env"
+            });
 
         s3ApiMock.givenResponseHeadObject({
             AcceptRanges: "bytes",
@@ -50,6 +80,34 @@ describe('eventhandler', () => {
             Bucket: "s2t-base-s2tbucket-19xbw73dypb0s",
             Key: "gcp/not-transcoded/sugr1km8s6/f423fbfb-6381-11e8-a23f-c7cbebde15f2.ogg"
         });
+
+        snsApiMock.expectedPublishParams(
+            {
+                Message: "placeholder",
+                MessageAttributes: {
+                    "api-key-id": {
+                        DataType: "String",
+                        StringValue: "sugr1km8s6"
+                    },
+                    bucket: {
+                        DataType: "String",
+                        StringValue: "s2t-base-s2tbucket-19xbw73dypb0s"
+                    },
+                    key: {
+                        DataType: "String",
+                        StringValue: "gcp/not-transcoded/sugr1km8s6/f423fbfb-6381-11e8-a23f-c7cbebde15f2.ogg"
+                    },
+                    pid: {
+                        DataType: "String",
+                        StringValue: "f423fbfb-6381-11e8-a23f-c7cbebde15f2"
+                    },
+                    "transcribe-provider": {
+                        DataType: "String",
+                        StringValue: "gcp"
+                    }
+                },
+                "TopicArn": "given:arn:from:env"
+            });
 
         s3ApiMock.givenResponseHeadObject({
             AcceptRanges: "bytes",

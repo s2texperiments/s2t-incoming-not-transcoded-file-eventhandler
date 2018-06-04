@@ -1,5 +1,6 @@
 const test = process.env['MODE'] === 'test';
 let s3Api = test ? require('./test/s3ApiMock.js') : require('./s3Api.js');
+let snsApi = test ? require('./test/snsApiMock.js') : require('./snsApi.js');
 
 exports.handler = async (event) => {
 
@@ -31,6 +32,33 @@ exports.handler = async (event) => {
     } = await s3Api.headObject({
         Bucket: bucketName,
         Key: key
+    });
+
+    await snsApi.publish({
+        Message: 'placeholder',
+        MessageAttributes: {
+            bucket: {
+                DataType: 'String',
+                StringValue: bucketName
+            },
+            key: {
+                DataType: 'String',
+                StringValue: key
+            },
+            "transcribe-provider": {
+                DataType: 'String',
+                StringValue: provider
+            },
+            pid: {
+                DataType: 'String',
+                StringValue: pid
+            },
+            "api-key-id": {
+                DataType: 'String',
+                StringValue: apiKeyId
+            },
+        },
+        TopicArn: process.env['TOPIC_ARN']
     });
 
     return {
