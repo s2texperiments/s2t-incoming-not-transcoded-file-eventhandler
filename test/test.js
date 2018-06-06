@@ -4,6 +4,7 @@ require('dotenv').config({
 });
 
 const expect = require('chai').expect;
+const proxyquire = require('proxyquire').noCallThru();
 
 const fs = require('fs');
 const event = JSON.parse(fs.readFileSync('test/s3EventData.json', 'utf8'));
@@ -61,7 +62,12 @@ describe('eventhandler', () => {
             Metadata: {},
         });
 
-        let underTest = require('../index.js');
+        let underTest = proxyquire('../index.js', {
+            './s3Api': s3ApiMock,
+            './snsApi': snsApiMock
+        });
+
+        //let underTest = require('../index.js');
         let snsMessage = await underTest.handler(event);
 
         expect(snsMessage).to.deep.equal({
@@ -122,7 +128,11 @@ describe('eventhandler', () => {
             },
         });
 
-        let underTest = require('../index.js');
+        let underTest = proxyquire('../index.js', {
+            './s3Api': s3ApiMock,
+            './snsApi': snsApiMock
+        });
+
         let snsMessage = await underTest.handler(event);
         expect(snsMessage).to.deep.equal({
             bucket: "s2t-base-s2tbucket-19xbw73dypb0s",

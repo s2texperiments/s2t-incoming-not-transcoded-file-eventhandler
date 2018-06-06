@@ -1,6 +1,5 @@
-const test = process.env['MODE'] === 'test';
-let s3Api = test ? require('./test/s3ApiMock.js') : require('./s3Api.js');
-let snsApi = test ? require('./test/snsApiMock.js') : require('./snsApi.js');
+let s3Api = require('./s3Api.js');
+let snsApi = require('./snsApi.js');
 
 exports.handler = async (event) => {
 
