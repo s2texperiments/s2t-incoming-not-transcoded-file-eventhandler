@@ -16,6 +16,8 @@ exports.handler = async (event) => {
         }]
     } = event;
 
+    console.log(`Incoming file: ${bucketName}/${key}`);
+
     let fbFn = {
         processApiKeyIdFrom: (key) => key.split("/")[2],
         processPidFrom: (key) => key.split("/").pop().split(".")[0],
@@ -33,7 +35,14 @@ exports.handler = async (event) => {
         Key: key
     });
 
-    await snsApi.publish({
+    console.log(`Collected Metadata: ApiKeyId: ${apiKeyId} \
+    ProcessId: ${pid} \ 
+    transcribe-provider: ${provider}
+    `);
+
+    console.log(`Send to ${process.env['TOPIC_ARN']}`);
+
+    return snsApi.publish({
         Message: 'placeholder',
         MessageAttributes: {
             bucket: {
@@ -59,12 +68,4 @@ exports.handler = async (event) => {
         },
         TopicArn: process.env['TOPIC_ARN']
     });
-
-    return {
-        bucket: bucketName,
-        key: key,
-        "transcribe-provider": provider,
-        pid: pid,
-        "api-key-id": apiKeyId
-    }
 };
