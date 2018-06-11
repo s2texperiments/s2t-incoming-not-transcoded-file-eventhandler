@@ -18,28 +18,11 @@ exports.handler = async (event) => {
 
     console.log(`Incoming file: ${bucketName}/${key}`);
 
-    console.log(key.split("/not-transcoded/")[1]);
-
-    let getSuffixPathPart = (key)=>{
-        let suffix = key.split("/not-transcoded/")[1];
-        let pathPart = suffix.split('/');
-        if(pathPart.length !== 2){
-            throw "path error"
-        }
-        return pathPart;
-    };
-
-    let fbFn = {
-        processApiKeyIdFrom: (key) => getSuffixPathPart(key)[0],
-        processPidFrom: (key) =>getSuffixPathPart(key)[1].split(".")[0],
-        processProviderFrom: (key) => key.split("/")[0],
-    };
-
     let {
         Metadata: {
-            "api-key-id": apiKeyId = fbFn.processApiKeyIdFrom(key),
-            pid: pid = fbFn.processPidFrom(key),
-            "transcribe-provider": provider = fbFn.processProviderFrom(key)
+            "api-key-id": apiKeyId,
+            pid: pid,
+            "transcribe-provider": provider,
         } = {}
     } = await s3Api.headObject({
         Bucket: bucketName,
