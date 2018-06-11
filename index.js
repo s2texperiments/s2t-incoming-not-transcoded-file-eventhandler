@@ -18,9 +18,20 @@ exports.handler = async (event) => {
 
     console.log(`Incoming file: ${bucketName}/${key}`);
 
+    console.log(key.split("/not-transcoded/")[1]);
+
+    let getSuffixPathPart = (key)=>{
+        let suffix = key.split("/not-transcoded/")[1];
+        let pathPart = suffix.split('/');
+        if(pathPart.length !== 2){
+            throw "path error"
+        }
+        return pathPart;
+    };
+
     let fbFn = {
-        processApiKeyIdFrom: (key) => key.split("/")[2],
-        processPidFrom: (key) => key.split("/").pop().split(".")[0],
+        processApiKeyIdFrom: (key) => getSuffixPathPart(key)[0],
+        processPidFrom: (key) =>getSuffixPathPart(key)[1].split(".")[0],
         processProviderFrom: (key) => key.split("/")[0],
     };
 
@@ -29,7 +40,7 @@ exports.handler = async (event) => {
             "api-key-id": apiKeyId = fbFn.processApiKeyIdFrom(key),
             pid: pid = fbFn.processPidFrom(key),
             "transcribe-provider": provider = fbFn.processProviderFrom(key)
-        }
+        } = {}
     } = await s3Api.headObject({
         Bucket: bucketName,
         Key: key
@@ -39,6 +50,11 @@ exports.handler = async (event) => {
     ProcessId: ${pid} \ 
     transcribe-provider: ${provider}
     `);
+
+    if(!apiKeyId || !pid || !provider){
+        console.error("Mandatory fields not set");
+        throw "Mandatory fields not set";
+    }
 
     console.log(`Send to ${process.env['TOPIC_ARN']}`);
 

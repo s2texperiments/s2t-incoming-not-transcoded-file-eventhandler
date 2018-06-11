@@ -3,16 +3,22 @@ require('dotenv').config({
     path: "test/.env"
 });
 
-const expect = require('chai').expect;
+const chai = require('chai');
+chai.use(require('chai-as-promised'));
+const expect = chai.expect;
 const proxyquire = require('proxyquire').noCallThru();
 const fake = require('sinon').fake;
 
 const fs = require('fs');
-const event = JSON.parse(fs.readFileSync('test/s3EventData.json', 'utf8'));
 
 describe('eventhandler', () => {
 
-    it('collect head request without meta data', async () => {
+    let event;
+    beforeEach(() => {
+        event = JSON.parse(fs.readFileSync('test/s3EventData.json', 'utf8'));
+    });
+
+    it('get s3 data with head request without metadata in header', async () => {
 
         let s3HeadObjectFake = fake.resolves(withoutMetadata());
         let snsPublishFake = fake.resolves("success");
@@ -37,33 +43,50 @@ describe('eventhandler', () => {
         expectSNSMessage(snsPublishParam);
 
         let messageAttributes = snsPublishParam.MessageAttributes;
-        expect(messageAttributes).to.have.all.keys('api-key-id', 'bucket', 'key','pid','transcribe-provider');
-        expectStringMessageAttribute(messageAttributes['api-key-id'],'sugr1km8s6');
-        expectStringMessageAttribute(messageAttributes.bucket,'s2t-base-s2tbucket-19xbw73dypb0s');
-        expectStringMessageAttribute(messageAttributes.key,'gcp/not-transcoded/sugr1km8s6/f423fbfb-6381-11e8-a23f-c7cbebde15f2.ogg');
-        expectStringMessageAttribute(messageAttributes.pid,'f423fbfb-6381-11e8-a23f-c7cbebde15f2');
-        expectStringMessageAttribute(messageAttributes['transcribe-provider'],'gcp');
+        expect(messageAttributes).to.have.all.keys('api-key-id', 'bucket', 'key', 'pid', 'transcribe-provider');
+        expectStringMessageAttribute(messageAttributes['api-key-id'], 'sugr1km8s6');
+        expectStringMessageAttribute(messageAttributes.bucket, 's2t-base-s2tbucket-19xbw73dypb0s');
+        expectStringMessageAttribute(messageAttributes.key, 'gcp/not-transcoded/sugr1km8s6/f423fbfb-6381-11e8-a23f-c7cbebde15f2.ogg');
+        expectStringMessageAttribute(messageAttributes.pid, 'f423fbfb-6381-11e8-a23f-c7cbebde15f2');
+        expectStringMessageAttribute(messageAttributes['transcribe-provider'], 'gcp');
 
     });
 
-    it('file without ending', async () => {
+    it('get s3 data with head request with unrelated metadata in header', async () => {
+
+        let s3HeadObjectFake = fake.resolves(withUnrelatedMetadata());
+        let snsPublishFake = fake.resolves("success");
+        let underTest = proxyquire('../index.js', {
+            './s3Api': {
+                headObject: s3HeadObjectFake
+            },
+            './snsApi': {
+                publish: snsPublishFake
+            }
+        });
+
+        await underTest.handler(event);
+
+        let [s3HeadParam] = s3HeadObjectFake.firstCall.args;
+        expectS3Bucket(s3HeadParam);
+        expectS3Key(s3HeadParam);
+
+        let [snsPublishParam] = snsPublishFake.firstCall.args;
+        expect(snsPublishParam).to.have.all.keys('TopicArn', 'Message', 'MessageAttributes');
+        expectSNSTopicArn(snsPublishParam);
+        expectSNSMessage(snsPublishParam);
+
+        let messageAttributes = snsPublishParam.MessageAttributes;
+        expect(messageAttributes).to.have.all.keys('api-key-id', 'bucket', 'key', 'pid', 'transcribe-provider');
+        expectStringMessageAttribute(messageAttributes['api-key-id'], 'sugr1km8s6');
+        expectStringMessageAttribute(messageAttributes.bucket, 's2t-base-s2tbucket-19xbw73dypb0s');
+        expectStringMessageAttribute(messageAttributes.key, 'gcp/not-transcoded/sugr1km8s6/f423fbfb-6381-11e8-a23f-c7cbebde15f2.ogg');
+        expectStringMessageAttribute(messageAttributes.pid, 'f423fbfb-6381-11e8-a23f-c7cbebde15f2');
+        expectStringMessageAttribute(messageAttributes['transcribe-provider'], 'gcp');
 
     });
 
-    it('file without api key id prefix', async () => {
-
-    });
-
-    it('fail collect', async () => {
-
-    });
-
-
-    it('fail send', async () => {
-
-    });
-
-    it('delegate collected meta data', async () => {
+    it('get s3 data with head request with metadata in header', async () => {
         let s3HeadObjectFake = fake.resolves(withMetadata());
         let snsPublishFake = fake.resolves("success");
 
@@ -88,12 +111,129 @@ describe('eventhandler', () => {
         expectSNSMessage(snsPublishParam);
 
         let messageAttributes = snsPublishParam.MessageAttributes;
-        expect(messageAttributes).to.have.all.keys('api-key-id', 'bucket', 'key','pid','transcribe-provider');
-        expectStringMessageAttribute(messageAttributes['api-key-id'],'another_api_key');
-        expectStringMessageAttribute(messageAttributes.bucket,'s2t-base-s2tbucket-19xbw73dypb0s');
-        expectStringMessageAttribute(messageAttributes.key,'gcp/not-transcoded/sugr1km8s6/f423fbfb-6381-11e8-a23f-c7cbebde15f2.ogg');
-        expectStringMessageAttribute(messageAttributes.pid,'another_pid');
-        expectStringMessageAttribute(messageAttributes['transcribe-provider'],'aws');
+        expect(messageAttributes).to.have.all.keys('api-key-id', 'bucket', 'key', 'pid', 'transcribe-provider');
+        expectStringMessageAttribute(messageAttributes['api-key-id'], 'another_api_key');
+        expectStringMessageAttribute(messageAttributes.bucket, 's2t-base-s2tbucket-19xbw73dypb0s');
+        expectStringMessageAttribute(messageAttributes.key, 'gcp/not-transcoded/sugr1km8s6/f423fbfb-6381-11e8-a23f-c7cbebde15f2.ogg');
+        expectStringMessageAttribute(messageAttributes.pid, 'another_pid');
+        expectStringMessageAttribute(messageAttributes['transcribe-provider'], 'aws');
+    });
+
+
+    it('fail for files which does not contain a apikeyid', async () => {
+
+        event.Records[0].s3.object.key = 'gcp/not-transcoded/no_prefix.ogg';
+
+        let s3HeadObjectFake = fake.resolves(withoutMetadata());
+        let snsPublishFake = fake.resolves("success");
+        let underTest = proxyquire('../index.js', {
+            './s3Api': {
+                headObject: s3HeadObjectFake
+            },
+            './snsApi': {
+                publish: snsPublishFake
+            }
+        });
+
+        return expect(underTest.handler(event)).be.rejected;
+    });
+
+    it('fail for missing file suffix', async () => {
+
+        event.Records[0].s3.object.key = 'gcp/not-transcoded/api_id';
+
+        let s3HeadObjectFake = fake.resolves(withoutMetadata());
+        let snsPublishFake = fake.resolves("success");
+        let underTest = proxyquire('../index.js', {
+            './s3Api': {
+                headObject: s3HeadObjectFake
+            },
+            './snsApi': {
+                publish: snsPublishFake
+            }
+        });
+
+        return expect(underTest.handler(event)).be.rejected;
+    });
+
+    it('fail for files which contain a longer path than expected', async () => {
+
+        event.Records[0].s3.object.key = 'gcp/not-transcoded/api_id/one_more_folder/no_prefix.ogg';
+
+        let s3HeadObjectFake = fake.resolves(withoutMetadata());
+        let snsPublishFake = fake.resolves("success");
+        let underTest = proxyquire('../index.js', {
+            './s3Api': {
+                headObject: s3HeadObjectFake
+            },
+            './snsApi': {
+                publish: snsPublishFake
+            }
+        });
+
+        return expect(underTest.handler(event)).be.rejected;
+    });
+
+    it('succeed for files which does not contain an extension', async () => {
+        event.Records[0].s3.object.key = 'gcp/not-transcoded/api_id/somefile';
+
+        let s3HeadObjectFake = fake.resolves(withoutMetadata());
+        let snsPublishFake = fake.resolves("success");
+        let underTest = proxyquire('../index.js', {
+            './s3Api': {
+                headObject: s3HeadObjectFake
+            },
+            './snsApi': {
+                publish: snsPublishFake
+            }
+        });
+
+        await underTest.handler(event);
+
+        let [snsPublishParam] = snsPublishFake.firstCall.args;
+        expect(snsPublishParam).to.have.all.keys('TopicArn', 'Message', 'MessageAttributes');
+        expectSNSTopicArn(snsPublishParam);
+        expectSNSMessage(snsPublishParam);
+
+        let messageAttributes = snsPublishParam.MessageAttributes;
+        expect(messageAttributes).to.have.all.keys('api-key-id', 'bucket', 'key', 'pid', 'transcribe-provider');
+        expectStringMessageAttribute(messageAttributes['api-key-id'], 'api_id');
+        expectStringMessageAttribute(messageAttributes.bucket, 's2t-base-s2tbucket-19xbw73dypb0s');
+        expectStringMessageAttribute(messageAttributes.key, 'gcp/not-transcoded/api_id/somefile');
+        expectStringMessageAttribute(messageAttributes.pid, 'somefile');
+        expectStringMessageAttribute(messageAttributes['transcribe-provider'], 'gcp');
+    });
+
+
+    it('fail if s3 call fails', async () => {
+        let s3HeadObjectFake = fake.rejects("reason");
+        let snsPublishFake = fake.resolves("success");
+        let underTest = proxyquire('../index.js', {
+            './s3Api': {
+                headObject: s3HeadObjectFake
+            },
+            './snsApi': {
+                publish: snsPublishFake
+            }
+        });
+
+        return expect(underTest.handler(event)).be.rejected;
+    });
+
+
+    it('fail if sns call fails', async () => {
+        let s3HeadObjectFake = fake.resolves(withoutMetadata());
+        let snsPublishFake = fake.rejects("reason");
+        let underTest = proxyquire('../index.js', {
+            './s3Api': {
+                headObject: s3HeadObjectFake
+            },
+            './snsApi': {
+                publish: snsPublishFake
+            }
+        });
+        return expect(underTest.handler(event)).be.rejected;
+
     });
 
 
@@ -104,20 +244,25 @@ describe('eventhandler', () => {
             ContentType: "image/jpeg",
             ETag: "\"6805f2cfc46c0f04559748bb039d69ae\"",
             LastModified: '',
-            //todo remove metadata
-            Metadata: {}
         }
     }
 
+    function withUnrelatedMetadata() {
+        return Object.assign({
+            Metadata: {
+                "other-stuff": "some-stuff"
+            }
+        }, withoutMetadata());
+    }
+
     function withMetadata() {
-        //todo change order after remove metadata from withoutmetadata
-        return Object.assign({}, withoutMetadata(), {
+        return Object.assign({
             Metadata: {
                 "api-key-id": "another_api_key",
                 "pid": "another_pid",
                 "transcribe-provider": "aws"
             }
-        });
+        }, withoutMetadata());
     }
 
 
@@ -161,12 +306,9 @@ describe('eventhandler', () => {
     }
 
     function expectStringMessageAttribute(messageAttribute, value) {
-
         expect(messageAttribute).to.include({
             DataType: 'String',
             StringValue: value
         });
-
     }
-
 });
