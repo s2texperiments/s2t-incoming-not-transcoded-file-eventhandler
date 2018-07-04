@@ -6,27 +6,23 @@ exports.handler = async (event) => {
     let {
         Records: [{
             s3: {
-                bucket: {
-                    name: bucketName
-                },
-                object: {
-                    key: key
-                }
+                bucket: {name: Bucket},
+                object: {key: Key}
             }
         }]
     } = event;
 
-    console.log(`Incoming file: ${bucketName}/${key}`);
+    console.log(`Incoming file: ${Bucket}/${Key}`);
 
     let {
         Metadata: {
             "api-key-id": apiKeyId,
-            pid: pid,
+            pid,
             "transcribe-provider": provider,
         } = {}
     } = await s3Api.headObject({
-        Bucket: bucketName,
-        Key: key
+        Bucket,
+        Key
     });
 
     console.log(`Collected Metadata: ApiKeyId: ${apiKeyId} \
@@ -34,7 +30,7 @@ exports.handler = async (event) => {
     transcribe-provider: ${provider}
     `);
 
-    if(!apiKeyId || !pid || !provider){
+    if (!apiKeyId || !pid || !provider) {
         console.error("Mandatory fields not set");
         throw "Mandatory fields not set";
     }
@@ -46,11 +42,11 @@ exports.handler = async (event) => {
         MessageAttributes: {
             bucket: {
                 DataType: 'String',
-                StringValue: bucketName
+                StringValue: Bucket
             },
             key: {
                 DataType: 'String',
-                StringValue: key
+                StringValue: Key
             },
             "transcribe-provider": {
                 DataType: 'String',
