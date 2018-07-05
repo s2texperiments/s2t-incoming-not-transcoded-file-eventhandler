@@ -46,15 +46,7 @@ exports.handler = async (event) => {
         });
     }, {});
 
-
-    //todo: mandatory fields
-    // if (!apiKeyId || !pid || !provider) {
-    //     console.error("Mandatory fields not set");
-    //     throw "Mandatory fields not set";
-    // }
-
-    console.log(`Send to ${TOPIC_ARN}`);
-    console.log(result);
+    console.log(`Send: ${JSON.stringify(result)} to ${TOPIC_ARN}`);
 
     return snsApi.publish({
         Message: 'placeholder',
