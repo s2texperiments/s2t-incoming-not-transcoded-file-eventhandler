@@ -15,7 +15,7 @@ describe('eventhandler', () => {
 
     let event;
     beforeEach(() => {
-        event = JSON.parse(fs.readFileSync('test/s3EventData.json', 'utf8'));
+        event = getEventData('/s3EventData.json');
     });
 
     it('succeed if s3 head request response with related metadata in header', async () => {
@@ -167,5 +167,9 @@ describe('eventhandler', () => {
             DataType: 'String',
             StringValue: value
         });
+    }
+
+    function getEventData(file) {
+        return JSON.parse(fs.readFileSync(`test/${file}`, 'utf8'));
     }
 });

@@ -1,5 +1,5 @@
 {
-  "name": "s2t-incoming-not-transcoded-file-eventhandler",
+  "name": "s3-metadata-eventhandler",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
